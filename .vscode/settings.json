@@ -1,0 +1,66 @@
+{
+    "nixEnvSelector.nixFile": "${workspaceRoot}/default.nix",
+
+    "editor.tokenColorCustomizations" : {
+        "[Tokyo Night]" : {
+            "textMateRules":
+            [  {
+                  "scope" : "support.module.elm",
+                  "settings": {
+                      "foreground": "#bb9af7",
+                      "fontStyle": "bold"
+                  }
+               },
+               {
+                   "scope" :"keyword.control",
+                   "settings": {
+                       "foreground": "#ff9e64",
+                       "fontStyle": "bold"
+                   }
+               },
+               {
+                   "scope":"constant.type-constructor.elm",
+                   "settings": {
+                       "foreground": "#f7768e",
+                       "fontStyle": "bold"
+                   }
+               },
+               {
+                   "scope":"keyword.operator.arrow.elm",
+                   "settings": {
+                       "foreground": "#e0af68",
+                       "fontStyle": "bold"
+                   }
+               },
+               {
+                   "scope":"entity.name.function",
+                   "settings": {
+                       "foreground": "#e0af68",
+                       "fontStyle": "bold"
+                   }
+               },
+               {
+                   "scope":"keyword.operator",
+                   "settings": {
+                       "foreground": "#bb9af7",
+                       "fontStyle": "bold"
+                   }
+               },
+               {
+                   "scope":"punctuation.definition.string.begin",
+                   "settings":{
+                       "foreground": "#9ece6a",
+                       "fontStyle": "bold"
+                   }
+               },
+               {
+                   "scope":"punctuation.definition.string.end",
+                   "settings": {
+                       "foreground": "#9ece6a",
+                       "fontStyle": "bold"
+                   }
+               }
+            ]
+        }
+    }
+}

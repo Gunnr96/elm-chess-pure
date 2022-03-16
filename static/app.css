@@ -1,0 +1,56 @@
+.tile {
+    width: 97px;
+    height: 97px;
+    position: absolute;
+}
+
+.piece {
+    position:absolute;
+    width: 97px;
+    height: 97px;
+    background-size: 97px;
+    cursor: grab;
+}
+
+.dark {
+    background-color: #206004;
+}
+
+.light {
+    background-color: beige;
+}
+
+.red {
+    background-color: tomato;
+}
+
+.yellow {
+    background-color: sandybrown;
+}
+
+.blue {
+    background-color: steelblue;
+}
+
+.indicator {
+    width: 97px;
+    height: 97px;
+    margin: 10px;
+    margin-bottom: 40px;
+}
+
+.wp { background-image: url('./icons/wp.png')} .bp { background-image: url('./icons/bp.png')}  
+.wr { background-image: url('./icons/wr.png')} .br { background-image: url('./icons/br.png')}
+.wn { background-image: url('./icons/wn.png')} .bn { background-image: url('./icons/bn.png')}
+.wb { background-image: url('./icons/wb.png')} .bb { background-image: url('./icons/bb.png')}
+.wq { background-image: url('./icons/wq.png')} .bq { background-image: url('./icons/bq.png')}
+.wk { background-image: url('./icons/wk.png')} .bk { background-image: url('./icons/bk.png')}
+
+.tile-A8 { transform: translate(    0) } .tile-B8 { transform: translate(100%, 0   )} .tile-C8 { transform: translate(200%,    0);} .tile-D8 {transform: translate(300%,    0);} .tile-E8 {transform: translate(400%,    0);} .tile-F8 {transform: translate(500%,    0);} .tile-G8 {transform: translate(600%,    0);} .tile-H8 {transform: translate(700%,    0);}
+.tile-A7 { transform: translateY(100%) } .tile-B7 { transform: translate(100%, 100%)} .tile-C7 { transform: translate(200%, 100%);} .tile-D7 {transform: translate(300%, 100%);} .tile-E7 {transform: translate(400%, 100%);} .tile-F7 {transform: translate(500%, 100%);} .tile-G7 {transform: translate(600%, 100%);} .tile-H7 {transform: translate(700%, 100%);}
+.tile-A6 { transform: translateY(200%) } .tile-B6 { transform: translate(100%, 200%)} .tile-C6 { transform: translate(200%, 200%);} .tile-D6 {transform: translate(300%, 200%);} .tile-E6 {transform: translate(400%, 200%);} .tile-F6 {transform: translate(500%, 200%);} .tile-G6 {transform: translate(600%, 200%);} .tile-H6 {transform: translate(700%, 200%);}
+.tile-A5 { transform: translateY(300%) } .tile-B5 { transform: translate(100%, 300%)} .tile-C5 { transform: translate(200%, 300%);} .tile-D5 {transform: translate(300%, 300%);} .tile-E5 {transform: translate(400%, 300%);} .tile-F5 {transform: translate(500%, 300%);} .tile-G5 {transform: translate(600%, 300%);} .tile-H5 {transform: translate(700%, 300%);}
+.tile-A4 { transform: translateY(400%) } .tile-B4 { transform: translate(100%, 400%)} .tile-C4 { transform: translate(200%, 400%);} .tile-D4 {transform: translate(300%, 400%);} .tile-E4 {transform: translate(400%, 400%);} .tile-F4 {transform: translate(500%, 400%);} .tile-G4 {transform: translate(600%, 400%);} .tile-H4 {transform: translate(700%, 400%);}
+.tile-A3 { transform: translateY(500%) } .tile-B3 { transform: translate(100%, 500%)} .tile-C3 { transform: translate(200%, 500%);} .tile-D3 {transform: translate(300%, 500%);} .tile-E3 {transform: translate(400%, 500%);} .tile-F3 {transform: translate(500%, 500%);} .tile-G3 {transform: translate(600%, 500%);} .tile-H3 {transform: translate(700%, 500%);}
+.tile-A2 { transform: translateY(600%) } .tile-B2 { transform: translate(100%, 600%)} .tile-C2 { transform: translate(200%, 600%);} .tile-D2 {transform: translate(300%, 600%);} .tile-E2 {transform: translate(400%, 600%);} .tile-F2 {transform: translate(500%, 600%);} .tile-G2 {transform: translate(600%, 600%);} .tile-H2 {transform: translate(700%, 600%);}
+.tile-A1 { transform: translateY(700%) } .tile-B1 { transform: translate(100%, 700%)} .tile-C1 { transform: translate(200%, 700%);} .tile-D1 {transform: translate(300%, 700%);} .tile-E1 {transform: translate(400%, 700%);} .tile-F1 {transform: translate(500%, 700%);} .tile-G1 {transform: translate(600%, 700%);} .tile-H1 {transform: translate(700%, 700%);}
