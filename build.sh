@@ -1,0 +1,1 @@
+nix-shell --run 'elm make --output=static/elm.js src/Main.elm'
