@@ -1,6 +1,7 @@
 module Rank exposing (..)
 
 import Vector8 exposing (..)
+import MaybeExtra exposing (kleisliArrow)
 
 type Rank = One | Two | Three | Four | Five | Six | Seven | Eight
 
@@ -64,6 +65,14 @@ asInt rank =
     Six    -> 6
     Seven  -> 7 
     Eight  -> 8
+
+offset : Int -> Rank -> Maybe Rank
+offset n =
+  let 
+    f = if n > 0 then succ else pred
+  in
+  List.repeat (abs n) f
+  |> List.foldr kleisliArrow Just
 
 asString : Rank -> String
 asString = String.fromInt << asInt

@@ -1,6 +1,7 @@
 module File exposing (..)
 
 import Vector8 exposing (..)
+import MaybeExtra exposing (kleisliArrow)
 
 type File = A | B | C | D | E | F | G | H
 
@@ -64,6 +65,14 @@ asInt file =
     F -> 6
     G -> 7
     H -> 8
+
+offset : Int -> File -> Maybe File
+offset n =
+  let 
+    f = if n > 0 then succ else pred
+  in
+  List.repeat (abs n) f
+  |> List.foldr kleisliArrow Just
 
 asString : File -> String
 asString file =

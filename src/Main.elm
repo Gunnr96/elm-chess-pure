@@ -1,8 +1,8 @@
 module Main exposing (main)
 
 import Browser
-import Html exposing (Html, Attribute, h2, text, div)
-import Html.Attributes exposing (style, class, attribute)
+import Html exposing (Html, Attribute, div)
+import Html.Attributes exposing (style, class)
 
 import Html.Events as Event
 import Json.Decode as D
@@ -10,6 +10,8 @@ import Json.Decode as D
 import Rank exposing (..)
 import File exposing (..)
 import Piece exposing (..)
+
+import MaybeExtra
 
 import Board exposing (Board)
 import Board as Board
@@ -97,13 +99,16 @@ update msg model =
         newModel =
           model.movingPiece
           |> Maybe.map (\(position, movingPiece) ->
+              let
+                newBoard = model.board
+                            |> Board.move position tile
+              in
               if movingPiece.color == model.playerToMove && List.member tile (getLegalMoves_ position movingPiece model.board)
               then { model
-                   | board = model.board
-                            |> Board.move position tile
+                   | board = newBoard
                    , playerToMove = flip model.playerToMove
                    , playerInCheck =
-                    case (isInCheck White model.board, isInCheck Black model.board) of
+                    case (isInCheck White newBoard, isInCheck Black newBoard) of
                       (True, _) -> Just White
                       (_, True) -> Just Black
                       (False, False) -> Nothing
@@ -136,11 +141,11 @@ update msg model =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions model =
+subscriptions _ =
   Sub.none
 
-board : Model -> Html Msg
-board model =
+boardView : Model -> Html Msg
+boardView model =
   let
     normal piece position =
         div 
@@ -161,11 +166,11 @@ board model =
       case model.movingPiece of
         Nothing ->
           normal piece position
-        Just (movingPiecePosition, movingPiece) ->
+        Just (movingPiecePosition, _) ->
           if movingPiecePosition /= position then 
-          normal piece position
+            normal piece position
           else
-          moving piece position
+            moving piece position
 
     tiles =
       model.tiles
@@ -177,21 +182,32 @@ board model =
         , Event.onClick (Highlight tile.position)
         ] []
       )
+
+  in
+    div [ class "board" ]
+    (tiles ++ (Board.asIndexedList model.board |> List.map showPiece))
+    
+indicators : Model -> Html Msg
+indicators model = 
+  let
     playerInCheck = 
       case model.playerInCheck of
         Nothing -> div [ class "indicator" ] []
         Just color -> div [ class "indicator", class <| cssColor color ] [] 
   in
-    div []
-    [ div [ class "indicator", class <| cssColor model.playerToMove ] [ ]
+  div [ class "indicator-panel"] [
+    div [ class "indicator"
+      , class <| cssColor model.playerToMove
+      ] [ ]
     , playerInCheck
-    , div [] (tiles ++ (Board.asIndexedList model.board |> List.map showPiece))
-    ]
-    
-
+  ]
+  
 view : Model -> Html Msg
-view model = board model
-
+view model = 
+  div [] 
+  [ boardView model
+  , indicators model
+  ]
 main : Program () Model Msg
 main =
   Browser.element
@@ -230,67 +246,51 @@ init _ =
 tileColor : Position -> TileColor
 tileColor position = if modBy 2 (File.asInt position.file + Rank.asInt position.rank) == 1 then Light else Dark
 
--- |> List.map (\position ->
---   div [ class (positionCSS position)
---       , class "tile"
---       , class (if modBy 2 (File.asInt position.file + Rank.asInt position.rank) == 1 then "light" else "dark")
---       , Event.onMouseUp (DropOn position)
---       , Event.onClick (Highlight position)
---       ] [])
+
+positionOffset : Int -> Int -> Position -> Maybe Position
+positionOffset x y pos =
+  Maybe.map2 Position (File.offset x pos.file) (Rank.offset y pos.rank)
+
 
 getLegalMoves_ : Position -> Piece -> Board -> List Position
-getLegalMoves_ position piece board_ = 
+getLegalMoves_ position piece board = 
   let
 
-    lines = moves piece (Board.lines position) board_
-    diagonals = moves piece (Board.diagonals position) board_
+    lines = moves piece (Board.lines position) board
+    diagonals = moves piece (Board.diagonals position) board
 
-    forwardDirection =
-        case piece.color of
-          White -> Rank.succ
-          Black -> Rank.pred
-
-    one f = f
-    two f = Maybe.andThen f << f
-
-    pieceInFront = 
-      forwardDirection position.rank
-      |> Maybe.map (\rank -> Position position.file rank)
-      |> Maybe.andThen (\inFront -> Board.get inFront board_ )
-    
-    pieceInFront2 =
-        forwardDirection position.rank
-        |> Maybe.andThen Rank.succ
-        |> Maybe.map (\rank -> Position position.file rank)
-        |> Maybe.andThen (\inFront -> Board.get inFront board_)
-    
-    pieceInFrontLeft =
-      Maybe.map2
-        Position
-        (File.succ position.file)
-        (forwardDirection position.rank)
-      |> Maybe.andThen (\inFrontLeft -> Board.get inFrontLeft board_)
-
-    pieceInFrontRight =
-      Maybe.map2
-        Position
-        (File.pred position.file)
-        (forwardDirection position.rank)
-      |> Maybe.andThen (\inFrontRight -> Board.get inFrontRight board_)
+    basisVector =
+      case piece.color of
+          White -> 1
+          Black -> -1
 
   in
   case piece.pieceType of
     Pawn    ->
-      []
-
-      
-      -- if Piece.startingRank piece == position.rank
-      -- then
-      --   if piece.color == White
-      --   then [Position (position.file) (Three), Position (position.file) (Four)]
-      --   else [Position (position.file) (Six), Position (position.file) (Five)]
-      -- else
-      --   [Position (position.file) (forwardDirection position.rank |> Maybe.withDefault position.rank)] 
+      let
+          regularMoves =
+            [ positionOffset 0 basisVector position
+            , (if Piece.startingRank piece == position.rank then positionOffset 0 (2 * basisVector) position else Nothing)
+            ] |> List.map (\mPos ->
+                            mPos
+                            |> Maybe.andThen (\pos -> Board.get pos board)
+                            |> (\x -> 
+                                case x of
+                                  Nothing -> mPos
+                                  Just _ -> Nothing
+                              )
+                          )
+          capturingMoves =
+            [ positionOffset basisVector basisVector position
+            , positionOffset (basisVector * -1) basisVector position
+            ] |> List.map (\mPos ->
+                            mPos
+                            |> Maybe.andThen (\pos -> Board.get pos board)
+                            |> Maybe.andThen (\_ -> mPos)
+                          )
+      in
+        MaybeExtra.catMaybes (regularMoves ++ capturingMoves)
+       
     Rook    ->
       lines |> Vector4.foldr (++) []
     Knight  ->

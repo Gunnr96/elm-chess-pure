@@ -5600,11 +5600,28 @@ var $elm$core$Maybe$andThen = F2(
 			return $elm$core$Maybe$Nothing;
 		}
 	});
-var $elm$core$Basics$composeL = F3(
-	function (g, f, x) {
-		return g(
-			f(x));
-	});
+var $author$project$MaybeExtra$catMaybes = function (list) {
+	catMaybes:
+	while (true) {
+		if (!list.b) {
+			return _List_Nil;
+		} else {
+			var x = list.a;
+			var xs = list.b;
+			if (x.$ === 'Nothing') {
+				var $temp$list = xs;
+				list = $temp$list;
+				continue catMaybes;
+			} else {
+				var x1 = x.a;
+				return A2(
+					$elm$core$List$cons,
+					x1,
+					$author$project$MaybeExtra$catMaybes(xs));
+			}
+		}
+	}
+};
 var $Chadtech$elm_vector$Vector8$Index0 = {$: 'Index0'};
 var $Chadtech$elm_vector$Vector8$Index1 = {$: 'Index1'};
 var $Chadtech$elm_vector$Vector8$Index2 = {$: 'Index2'};
@@ -5684,6 +5701,11 @@ var $author$project$Board$get = F2(
 				$Chadtech$elm_vector$Vector8$get,
 				$author$project$Rank$asIndex(position.rank),
 				board.tiles));
+	});
+var $elm$core$Basics$composeL = F3(
+	function (g, f, x) {
+		return g(
+			f(x));
 	});
 var $elm$core$List$maybeCons = F3(
 	function (f, mx, xs) {
@@ -5857,16 +5879,6 @@ var $author$project$Board$lines = function (position) {
 			$elm$core$Maybe$Just(position.rank),
 			$author$project$File$pred(position.file)));
 };
-var $elm$core$Maybe$map = F2(
-	function (f, maybe) {
-		if (maybe.$ === 'Just') {
-			var value = maybe.a;
-			return $elm$core$Maybe$Just(
-				f(value));
-		} else {
-			return $elm$core$Maybe$Nothing;
-		}
-	});
 var $Chadtech$elm_vector$Vector4$map = F2(
 	function (f, _v0) {
 		var vector = _v0.a;
@@ -5884,6 +5896,16 @@ var $author$project$Main$Stop = function (a) {
 	return {$: 'Stop', a: a};
 };
 var $author$project$Main$Toss = {$: 'Toss'};
+var $elm$core$Maybe$map = F2(
+	function (f, maybe) {
+		if (maybe.$ === 'Just') {
+			var value = maybe.a;
+			return $elm$core$Maybe$Just(
+				f(value));
+		} else {
+			return $elm$core$Maybe$Nothing;
+		}
+	});
 var $author$project$Main$takeWhile = F2(
 	function (func, list) {
 		if (list.b) {
@@ -5952,6 +5974,80 @@ var $author$project$Main$moves = F3(
 				}),
 			validMoves);
 	});
+var $elm$core$Basics$negate = function (n) {
+	return -n;
+};
+var $elm$core$Basics$abs = function (n) {
+	return (n < 0) ? (-n) : n;
+};
+var $author$project$MaybeExtra$kleisliArrow = F2(
+	function (f, g) {
+		return function (x) {
+			return A2(
+				$elm$core$Maybe$andThen,
+				g,
+				f(x));
+		};
+	});
+var $elm$core$List$repeatHelp = F3(
+	function (result, n, value) {
+		repeatHelp:
+		while (true) {
+			if (n <= 0) {
+				return result;
+			} else {
+				var $temp$result = A2($elm$core$List$cons, value, result),
+					$temp$n = n - 1,
+					$temp$value = value;
+				result = $temp$result;
+				n = $temp$n;
+				value = $temp$value;
+				continue repeatHelp;
+			}
+		}
+	});
+var $elm$core$List$repeat = F2(
+	function (n, value) {
+		return A3($elm$core$List$repeatHelp, _List_Nil, n, value);
+	});
+var $author$project$File$offset = function (n) {
+	var f = (n > 0) ? $author$project$File$succ : $author$project$File$pred;
+	return A3(
+		$elm$core$List$foldr,
+		$author$project$MaybeExtra$kleisliArrow,
+		$elm$core$Maybe$Just,
+		A2(
+			$elm$core$List$repeat,
+			$elm$core$Basics$abs(n),
+			f));
+};
+var $author$project$Rank$offset = function (n) {
+	var f = (n > 0) ? $author$project$Rank$succ : $author$project$Rank$pred;
+	return A3(
+		$elm$core$List$foldr,
+		$author$project$MaybeExtra$kleisliArrow,
+		$elm$core$Maybe$Just,
+		A2(
+			$elm$core$List$repeat,
+			$elm$core$Basics$abs(n),
+			f));
+};
+var $author$project$Main$positionOffset = F3(
+	function (x, y, pos) {
+		return A3(
+			$elm$core$Maybe$map2,
+			$author$project$Piece$Position,
+			A2($author$project$File$offset, x, pos.file),
+			A2($author$project$Rank$offset, y, pos.rank));
+	});
+var $author$project$Piece$startingRank = function (piece) {
+	var _v0 = piece.pieceType;
+	if (_v0.$ === 'Pawn') {
+		return _Utils_eq(piece.color, $author$project$Piece$White) ? $author$project$Rank$Two : $author$project$Rank$Seven;
+	} else {
+		return _Utils_eq(piece.color, $author$project$Piece$White) ? $author$project$Rank$One : $author$project$Rank$Eight;
+	}
+};
 var $elm$core$List$takeReverse = F3(
 	function (n, list, kept) {
 		takeReverse:
@@ -6080,82 +6176,73 @@ var $elm$core$List$take = F2(
 	});
 var $author$project$Main$getLegalMoves_ = F3(
 	function (position, piece, board_) {
-		var two = function (f) {
-			return A2(
-				$elm$core$Basics$composeL,
-				$elm$core$Maybe$andThen(f),
-				f);
-		};
-		var one = function (f) {
-			return f;
-		};
 		var lines = A3(
 			$author$project$Main$moves,
 			piece,
 			$author$project$Board$lines(position),
 			board_);
-		var forwardDirection = function () {
-			var _v1 = piece.color;
-			if (_v1.$ === 'White') {
-				return $author$project$Rank$succ;
-			} else {
-				return $author$project$Rank$pred;
-			}
-		}();
-		var pieceInFront = A2(
-			$elm$core$Maybe$andThen,
-			function (inFront) {
-				return A2($author$project$Board$get, inFront, board_);
-			},
-			A2(
-				$elm$core$Maybe$map,
-				function (rank) {
-					return A2($author$project$Piece$Position, position.file, rank);
-				},
-				forwardDirection(position.rank)));
-		var pieceInFront2 = A2(
-			$elm$core$Maybe$andThen,
-			function (inFront) {
-				return A2($author$project$Board$get, inFront, board_);
-			},
-			A2(
-				$elm$core$Maybe$map,
-				function (rank) {
-					return A2($author$project$Piece$Position, position.file, rank);
-				},
-				A2(
-					$elm$core$Maybe$andThen,
-					$author$project$Rank$succ,
-					forwardDirection(position.rank))));
-		var pieceInFrontLeft = A2(
-			$elm$core$Maybe$andThen,
-			function (inFrontLeft) {
-				return A2($author$project$Board$get, inFrontLeft, board_);
-			},
-			A3(
-				$elm$core$Maybe$map2,
-				$author$project$Piece$Position,
-				$author$project$File$succ(position.file),
-				forwardDirection(position.rank)));
-		var pieceInFrontRight = A2(
-			$elm$core$Maybe$andThen,
-			function (inFrontRight) {
-				return A2($author$project$Board$get, inFrontRight, board_);
-			},
-			A3(
-				$elm$core$Maybe$map2,
-				$author$project$Piece$Position,
-				$author$project$File$pred(position.file),
-				forwardDirection(position.rank)));
 		var diagonals = A3(
 			$author$project$Main$moves,
 			piece,
 			$author$project$Board$diagonals(position),
 			board_);
+		var basisVector = function () {
+			var _v3 = piece.color;
+			if (_v3.$ === 'White') {
+				return 1;
+			} else {
+				return -1;
+			}
+		}();
 		var _v0 = piece.pieceType;
 		switch (_v0.$) {
 			case 'Pawn':
-				return _List_Nil;
+				var regularMoves = A2(
+					$elm$core$List$map,
+					function (mPos) {
+						return function (x) {
+							if (x.$ === 'Nothing') {
+								return mPos;
+							} else {
+								return $elm$core$Maybe$Nothing;
+							}
+						}(
+							A2(
+								$elm$core$Maybe$andThen,
+								function (pos) {
+									return A2($author$project$Board$get, pos, board_);
+								},
+								mPos));
+					},
+					_List_fromArray(
+						[
+							A3($author$project$Main$positionOffset, 0, basisVector, position),
+							_Utils_eq(
+							$author$project$Piece$startingRank(piece),
+							position.rank) ? A3($author$project$Main$positionOffset, 0, 2 * basisVector, position) : $elm$core$Maybe$Nothing
+						]));
+				var capturingMoves = A2(
+					$elm$core$List$map,
+					function (mPos) {
+						return A2(
+							$elm$core$Maybe$andThen,
+							function (_v1) {
+								return mPos;
+							},
+							A2(
+								$elm$core$Maybe$andThen,
+								function (pos) {
+									return A2($author$project$Board$get, pos, board_);
+								},
+								mPos));
+					},
+					_List_fromArray(
+						[
+							A3($author$project$Main$positionOffset, basisVector, basisVector, position),
+							A3($author$project$Main$positionOffset, basisVector * (-1), basisVector, position)
+						]));
+				return $author$project$MaybeExtra$catMaybes(
+					_Utils_ap(regularMoves, capturingMoves));
 			case 'Rook':
 				return A3($Chadtech$elm_vector$Vector4$foldr, $elm$core$Basics$append, _List_Nil, lines);
 			case 'Knight':
@@ -6525,17 +6612,18 @@ var $author$project$Main$update = F2(
 						function (_v1) {
 							var position = _v1.a;
 							var movingPiece = _v1.b;
+							var newBoard = A3($author$project$Board$move, position, tile, model.board);
 							return (_Utils_eq(movingPiece.color, model.playerToMove) && A2(
 								$elm$core$List$member,
 								tile,
 								A3($author$project$Main$getLegalMoves_, position, movingPiece, model.board))) ? _Utils_update(
 								model,
 								{
-									board: A3($author$project$Board$move, position, tile, model.board),
+									board: newBoard,
 									playerInCheck: function () {
 										var _v2 = _Utils_Tuple2(
-											A2($author$project$Main$isInCheck, $author$project$Piece$White, model.board),
-											A2($author$project$Main$isInCheck, $author$project$Piece$Black, model.board));
+											A2($author$project$Main$isInCheck, $author$project$Piece$White, newBoard),
+											A2($author$project$Main$isInCheck, $author$project$Piece$Black, newBoard));
 										if (_v2.a) {
 											return $elm$core$Maybe$Just($author$project$Piece$White);
 										} else {
@@ -6656,13 +6744,6 @@ var $elm$html$Html$Attributes$stringProperty = F2(
 			$elm$json$Json$Encode$string(string));
 	});
 var $elm$html$Html$Attributes$class = $elm$html$Html$Attributes$stringProperty('className');
-var $author$project$Main$cssColor = function (color) {
-	if (color.$ === 'White') {
-		return 'light';
-	} else {
-		return 'dark';
-	}
-};
 var $author$project$Main$cssTileColor = function (color) {
 	switch (color.$) {
 		case 'Dark':
@@ -6766,29 +6847,6 @@ var $author$project$Main$board = function (model) {
 				_List_Nil);
 		},
 		model.tiles);
-	var playerInCheck = function () {
-		var _v3 = model.playerInCheck;
-		if (_v3.$ === 'Nothing') {
-			return A2(
-				$elm$html$Html$div,
-				_List_fromArray(
-					[
-						$elm$html$Html$Attributes$class('indicator')
-					]),
-				_List_Nil);
-		} else {
-			var color = _v3.a;
-			return A2(
-				$elm$html$Html$div,
-				_List_fromArray(
-					[
-						$elm$html$Html$Attributes$class('indicator'),
-						$elm$html$Html$Attributes$class(
-						$author$project$Main$cssColor(color))
-					]),
-				_List_Nil);
-		}
-	}();
 	var normal = F2(
 		function (piece, position) {
 			return A2(
@@ -6837,7 +6895,54 @@ var $author$project$Main$board = function (model) {
 	};
 	return A2(
 		$elm$html$Html$div,
-		_List_Nil,
+		_List_fromArray(
+			[
+				$elm$html$Html$Attributes$class('board')
+			]),
+		_Utils_ap(
+			tiles,
+			A2(
+				$elm$core$List$map,
+				showPiece,
+				$author$project$Board$asIndexedList(model.board))));
+};
+var $author$project$Main$cssColor = function (color) {
+	if (color.$ === 'White') {
+		return 'light';
+	} else {
+		return 'dark';
+	}
+};
+var $author$project$Main$indicators = function (model) {
+	var playerInCheck = function () {
+		var _v0 = model.playerInCheck;
+		if (_v0.$ === 'Nothing') {
+			return A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$class('indicator')
+					]),
+				_List_Nil);
+		} else {
+			var color = _v0.a;
+			return A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$class('indicator'),
+						$elm$html$Html$Attributes$class(
+						$author$project$Main$cssColor(color))
+					]),
+				_List_Nil);
+		}
+	}();
+	return A2(
+		$elm$html$Html$div,
+		_List_fromArray(
+			[
+				$elm$html$Html$Attributes$class('indicator-panel')
+			]),
 		_List_fromArray(
 			[
 				A2(
@@ -6849,20 +6954,18 @@ var $author$project$Main$board = function (model) {
 						$author$project$Main$cssColor(model.playerToMove))
 					]),
 				_List_Nil),
-				playerInCheck,
-				A2(
-				$elm$html$Html$div,
-				_List_Nil,
-				_Utils_ap(
-					tiles,
-					A2(
-						$elm$core$List$map,
-						showPiece,
-						$author$project$Board$asIndexedList(model.board))))
+				playerInCheck
 			]));
 };
 var $author$project$Main$view = function (model) {
-	return $author$project$Main$board(model);
+	return A2(
+		$elm$html$Html$div,
+		_List_Nil,
+		_List_fromArray(
+			[
+				$author$project$Main$board(model),
+				$author$project$Main$indicators(model)
+			]));
 };
 var $author$project$Main$main = $elm$browser$Browser$element(
 	{init: $author$project$Main$init, subscriptions: $author$project$Main$subscriptions, update: $author$project$Main$update, view: $author$project$Main$view});
