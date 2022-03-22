@@ -38,10 +38,20 @@ type alias Model =
 
 type Msg
   = NoOp
-  | Move Position Piece
+  | MakeMove Position Piece
   | CancelMove
   | DropOn Position
   | Highlight Position
+
+
+type MoveType
+  = Reposition
+  | Capture
+
+type alias Move =
+  { position : Position
+  , moveType : MoveType
+  }
 
 flip : Color -> Color
 flip color =
@@ -76,9 +86,11 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
   case msg of
     NoOp -> (model, Cmd.none)
-    Move position piece -> 
+    MakeMove position piece -> 
       let
-          legalMovePositions = getLegalMoves_ position piece model.board
+          legalMovePositions =
+            getLegalMoves_ position piece model.board
+            |> List.map (\move -> move.position)
 
           newTiles =
             model.tiles
@@ -103,7 +115,10 @@ update msg model =
                 newBoard = model.board
                             |> Board.move position tile
               in
-              if movingPiece.color == model.playerToMove && List.member tile (getLegalMoves_ position movingPiece model.board)
+              if movingPiece.color == model.playerToMove
+                  && List.member tile (getLegalMoves_ position movingPiece model.board
+                                        |> List.map (\move -> move.position)
+                                      )
               then { model
                    | board = newBoard
                    , playerToMove = flip model.playerToMove
@@ -153,7 +168,7 @@ boardView model =
           , class "piece"
           , class (positionCSS position)
           , Event.onMouseUp (DropOn position)
-          , onDragStart (Move position piece)
+          , onDragStart (MakeMove position piece)
           ] []
     moving piece position =
       div
@@ -251,8 +266,13 @@ positionOffset : Int -> Int -> Position -> Maybe Position
 positionOffset x y pos =
   Maybe.map2 Position (File.offset x pos.file) (Rank.offset y pos.rank)
 
+moveTo : Position -> Move
+moveTo pos = Move pos Reposition
 
-getLegalMoves_ : Position -> Piece -> Board -> List Position
+capture : Position -> Move
+capture pos = Move pos Capture
+
+getLegalMoves_ : Position -> Piece -> Board -> List Move
 getLegalMoves_ position piece board = 
   let
 
@@ -276,7 +296,7 @@ getLegalMoves_ position piece board =
                             |> Maybe.andThen (\pos -> Board.get pos board)
                             |> (\x -> 
                                 case x of
-                                  Nothing -> mPos
+                                  Nothing -> mPos |> Maybe.map (\pos -> Move pos Reposition)
                                   Just _ -> Nothing
                               )
                           )
@@ -286,7 +306,7 @@ getLegalMoves_ position piece board =
             ] |> List.map (\mPos ->
                             mPos
                             |> Maybe.andThen (\pos -> Board.get pos board)
-                            |> Maybe.andThen (\_ -> mPos)
+                            |> Maybe.andThen (\_ -> mPos |> Maybe.map (\pos -> Move pos Capture))
                           )
       in
         MaybeExtra.catMaybes (regularMoves ++ capturingMoves)
@@ -295,6 +315,15 @@ getLegalMoves_ position piece board =
       lines |> Vector4.foldr (++) []
     Knight  ->
       Board.knightMoves position
+        |> List.map (\pos -> 
+                      Board.get pos board
+                        |> Maybe.andThen (\otherPiece -> 
+                                            if piece.color == otherPiece.color
+                                            then Nothing
+                                            else Just <| capture pos
+                                         )
+                     )
+        |> MaybeExtra.catMaybes
     Bishop  ->
       diagonals |> Vector4.foldr (++) []
     Queen   ->
@@ -305,17 +334,18 @@ getLegalMoves_ position piece board =
       (diagonals |> Vector4.map (List.take 1) |> Vector4.foldr (++) [])
 
 isInCheck : Color -> Board -> Bool
-isInCheck color board_ =
+isInCheck color board =
   let
     king = 
-      board_
+      board
       |> Board.asIndexedList
       |> find (\(_, piece) ->
             piece.pieceType == King && piece.color == color
           )
 
-    testMoves p fromPos = getLegalMoves_ fromPos (Piece color p) board_
-      |> List.map(\it -> Board.get it board_)
+    testMoves p fromPos = getLegalMoves_ fromPos (Piece color p) board
+      |> List.filter (\move -> move.moveType == Capture)
+      |> List.map (\move -> Board.get move.position board)
       |> List.any (\mPiece ->
                     mPiece
                     |> Maybe.map (\piece -> piece.color == flip color && piece.pieceType == p)
@@ -336,37 +366,42 @@ isInCheck color board_ =
 
 -- * HELPER FUNCTIONS
 
-type Terminate = Keep | Toss
-type Traversal = Continue | Stop Terminate 
-
-moves :  Piece -> Vector4 (List Position) -> Board -> Vector4 (List Position)
-moves piece validMoves board_ =
+moves :  Piece -> Vector4 (List Position) -> Board -> Vector4 (List Move)
+moves piece validMoves board =
   validMoves 
     |> Vector4.map 
       (takeWhile 
         (\x ->
           -- color of the piece being moved, some other piece on the board
-          case (piece.color, Board.get x board_ |> Maybe.map(\it -> it.color)) of
-            (_    , Nothing)        -> Continue
-            (White, Just White) -> Stop Toss
-            (White, Just Black) -> Stop Keep
-            (Black, Just White) -> Stop Keep
-            (Black, Just Black) -> Stop Toss
+          case (piece.color, Board.get x board) of
+            (_    , Nothing)  -> True
+            (_, Just _)       -> False
         )
-      )
+      ) |> Vector4.map (\(list, mLast) -> 
+            List.map moveTo list
+            ++ (mLast
+                  |> Maybe.andThen (\last -> Board.get last board |> Maybe.map (\p -> (last, p)))
+                  |> Maybe.andThen (\(otherPiecePosition, otherPiece) ->
+                        if piece.color == otherPiece.color
+                        then Nothing
+                        else Just <| capture otherPiecePosition
+                    )
+                  |> MaybeExtra.maybeToList
+                )
+          )
 
-takeWhile : (a -> Traversal) -> List a -> List a
+-- returns elements while predicate is accepted
+-- and the last accepted element separately
+takeWhile : (a -> Bool) -> List a -> (List a, Maybe a)
 takeWhile func list =
   case list of
-    (x::xs) -> 
-      case func x of
+    (x::xs) ->
+      if func x 
         -- continue
-        Continue -> x :: takeWhile func xs
+      then (x :: Tuple.first (takeWhile func xs), Nothing)
         -- stop
-        Stop Toss -> []
-        -- stop but include current element
-        Stop Keep -> [x]
-    [] -> []
+      else ([], Just x)
+    [] -> ([], Nothing)
 
 find : (a -> Bool) -> List a -> Maybe a
 find fun list =
