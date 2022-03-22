@@ -5405,7 +5405,7 @@ var $author$project$Main$init = function (_v0) {
 };
 var $elm$core$Platform$Sub$batch = _Platform_batch;
 var $elm$core$Platform$Sub$none = $elm$core$Platform$Sub$batch(_List_Nil);
-var $author$project$Main$subscriptions = function (model) {
+var $author$project$Main$subscriptions = function (_v0) {
 	return $elm$core$Platform$Sub$none;
 };
 var $author$project$Main$Red = {$: 'Red'};
@@ -5591,6 +5591,12 @@ var $Chadtech$elm_vector$Vector4$foldr = F3(
 			start,
 			$Chadtech$elm_vector$Vector4$toList(vector));
 	});
+var $author$project$Main$Capture = {$: 'Capture'};
+var $author$project$Main$Move = F2(
+	function (position, moveType) {
+		return {moveType: moveType, position: position};
+	});
+var $author$project$Main$Reposition = {$: 'Reposition'};
 var $elm$core$Maybe$andThen = F2(
 	function (callback, maybeValue) {
 		if (maybeValue.$ === 'Just') {
@@ -5600,6 +5606,9 @@ var $elm$core$Maybe$andThen = F2(
 			return $elm$core$Maybe$Nothing;
 		}
 	});
+var $author$project$Main$capture = function (pos) {
+	return A2($author$project$Main$Move, pos, $author$project$Main$Capture);
+};
 var $author$project$MaybeExtra$catMaybes = function (list) {
 	catMaybes:
 	while (true) {
@@ -5879,6 +5888,16 @@ var $author$project$Board$lines = function (position) {
 			$elm$core$Maybe$Just(position.rank),
 			$author$project$File$pred(position.file)));
 };
+var $elm$core$Maybe$map = F2(
+	function (f, maybe) {
+		if (maybe.$ === 'Just') {
+			var value = maybe.a;
+			return $elm$core$Maybe$Just(
+				f(value));
+		} else {
+			return $elm$core$Maybe$Nothing;
+		}
+	});
 var $Chadtech$elm_vector$Vector4$map = F2(
 	function (f, _v0) {
 		var vector = _v0.a;
@@ -5890,89 +5909,80 @@ var $Chadtech$elm_vector$Vector4$map = F2(
 				n3: f(vector.n3)
 			});
 	});
-var $author$project$Main$Continue = {$: 'Continue'};
-var $author$project$Main$Keep = {$: 'Keep'};
-var $author$project$Main$Stop = function (a) {
-	return {$: 'Stop', a: a};
+var $author$project$Main$moveTo = function (pos) {
+	return A2($author$project$Main$Move, pos, $author$project$Main$Reposition);
 };
-var $author$project$Main$Toss = {$: 'Toss'};
-var $elm$core$Maybe$map = F2(
-	function (f, maybe) {
-		if (maybe.$ === 'Just') {
-			var value = maybe.a;
-			return $elm$core$Maybe$Just(
-				f(value));
-		} else {
-			return $elm$core$Maybe$Nothing;
-		}
-	});
+var $author$project$MaybeExtra$maybeToList = function (x) {
+	if (x.$ === 'Just') {
+		var x1 = x.a;
+		return _List_fromArray(
+			[x1]);
+	} else {
+		return _List_Nil;
+	}
+};
 var $author$project$Main$takeWhile = F2(
 	function (func, list) {
 		if (list.b) {
 			var x = list.a;
 			var xs = list.b;
-			var _v1 = func(x);
-			if (_v1.$ === 'Continue') {
-				return A2(
+			return func(x) ? _Utils_Tuple2(
+				A2(
 					$elm$core$List$cons,
 					x,
-					A2($author$project$Main$takeWhile, func, xs));
-			} else {
-				if (_v1.a.$ === 'Toss') {
-					var _v2 = _v1.a;
-					return _List_Nil;
-				} else {
-					var _v3 = _v1.a;
-					return _List_fromArray(
-						[x]);
-				}
-			}
+					A2($author$project$Main$takeWhile, func, xs).a),
+				$elm$core$Maybe$Nothing) : _Utils_Tuple2(
+				_List_Nil,
+				$elm$core$Maybe$Just(x));
 		} else {
-			return _List_Nil;
+			return _Utils_Tuple2(_List_Nil, $elm$core$Maybe$Nothing);
 		}
 	});
 var $author$project$Main$moves = F3(
-	function (piece, validMoves, board_) {
+	function (piece, validMoves, board) {
 		return A2(
 			$Chadtech$elm_vector$Vector4$map,
-			$author$project$Main$takeWhile(
-				function (x) {
-					var _v0 = _Utils_Tuple2(
-						piece.color,
+			function (_v2) {
+				var list = _v2.a;
+				var mLast = _v2.b;
+				return _Utils_ap(
+					A2($elm$core$List$map, $author$project$Main$moveTo, list),
+					$author$project$MaybeExtra$maybeToList(
 						A2(
-							$elm$core$Maybe$map,
-							function (it) {
-								return it.color;
+							$elm$core$Maybe$andThen,
+							function (_v3) {
+								var otherPiecePosition = _v3.a;
+								var otherPiece = _v3.b;
+								return _Utils_eq(piece.color, otherPiece.color) ? $elm$core$Maybe$Nothing : $elm$core$Maybe$Just(
+									$author$project$Main$capture(otherPiecePosition));
 							},
-							A2($author$project$Board$get, x, board_)));
-					if (_v0.b.$ === 'Nothing') {
-						var _v1 = _v0.b;
-						return $author$project$Main$Continue;
-					} else {
-						if (_v0.a.$ === 'White') {
-							if (_v0.b.a.$ === 'White') {
-								var _v2 = _v0.a;
-								var _v3 = _v0.b.a;
-								return $author$project$Main$Stop($author$project$Main$Toss);
-							} else {
-								var _v4 = _v0.a;
-								var _v5 = _v0.b.a;
-								return $author$project$Main$Stop($author$project$Main$Keep);
-							}
+							A2(
+								$elm$core$Maybe$andThen,
+								function (last) {
+									return A2(
+										$elm$core$Maybe$map,
+										function (p) {
+											return _Utils_Tuple2(last, p);
+										},
+										A2($author$project$Board$get, last, board));
+								},
+								mLast))));
+			},
+			A2(
+				$Chadtech$elm_vector$Vector4$map,
+				$author$project$Main$takeWhile(
+					function (x) {
+						var _v0 = _Utils_Tuple2(
+							piece.color,
+							A2($author$project$Board$get, x, board));
+						if (_v0.b.$ === 'Nothing') {
+							var _v1 = _v0.b;
+							return true;
 						} else {
-							if (_v0.b.a.$ === 'White') {
-								var _v6 = _v0.a;
-								var _v7 = _v0.b.a;
-								return $author$project$Main$Stop($author$project$Main$Keep);
-							} else {
-								var _v8 = _v0.a;
-								var _v9 = _v0.b.a;
-								return $author$project$Main$Stop($author$project$Main$Toss);
-							}
+							return false;
 						}
-					}
-				}),
-			validMoves);
+					}),
+				validMoves));
 	});
 var $elm$core$Basics$negate = function (n) {
 	return -n;
@@ -6175,20 +6185,20 @@ var $elm$core$List$take = F2(
 		return A3($elm$core$List$takeFast, 0, n, list);
 	});
 var $author$project$Main$getLegalMoves_ = F3(
-	function (position, piece, board_) {
+	function (position, piece, board) {
 		var lines = A3(
 			$author$project$Main$moves,
 			piece,
 			$author$project$Board$lines(position),
-			board_);
+			board);
 		var diagonals = A3(
 			$author$project$Main$moves,
 			piece,
 			$author$project$Board$diagonals(position),
-			board_);
+			board);
 		var basisVector = function () {
-			var _v3 = piece.color;
-			if (_v3.$ === 'White') {
+			var _v4 = piece.color;
+			if (_v4.$ === 'White') {
 				return 1;
 			} else {
 				return -1;
@@ -6202,7 +6212,12 @@ var $author$project$Main$getLegalMoves_ = F3(
 					function (mPos) {
 						return function (x) {
 							if (x.$ === 'Nothing') {
-								return mPos;
+								return A2(
+									$elm$core$Maybe$map,
+									function (pos) {
+										return A2($author$project$Main$Move, pos, $author$project$Main$Reposition);
+									},
+									mPos);
 							} else {
 								return $elm$core$Maybe$Nothing;
 							}
@@ -6210,7 +6225,7 @@ var $author$project$Main$getLegalMoves_ = F3(
 							A2(
 								$elm$core$Maybe$andThen,
 								function (pos) {
-									return A2($author$project$Board$get, pos, board_);
+									return A2($author$project$Board$get, pos, board);
 								},
 								mPos));
 					},
@@ -6227,12 +6242,17 @@ var $author$project$Main$getLegalMoves_ = F3(
 						return A2(
 							$elm$core$Maybe$andThen,
 							function (_v1) {
-								return mPos;
+								return A2(
+									$elm$core$Maybe$map,
+									function (pos) {
+										return A2($author$project$Main$Move, pos, $author$project$Main$Capture);
+									},
+									mPos);
 							},
 							A2(
 								$elm$core$Maybe$andThen,
 								function (pos) {
-									return A2($author$project$Board$get, pos, board_);
+									return A2($author$project$Board$get, pos, board);
 								},
 								mPos));
 					},
@@ -6246,7 +6266,32 @@ var $author$project$Main$getLegalMoves_ = F3(
 			case 'Rook':
 				return A3($Chadtech$elm_vector$Vector4$foldr, $elm$core$Basics$append, _List_Nil, lines);
 			case 'Knight':
-				return $author$project$Board$knightMoves(position);
+				return $author$project$MaybeExtra$catMaybes(
+					A2(
+						$elm$core$List$map,
+						function (pos) {
+							return function (mPiece) {
+								var _v3 = A2(
+									$elm$core$Maybe$map,
+									function (it) {
+										return _Utils_eq(it.color, piece.color);
+									},
+									mPiece);
+								if (_v3.$ === 'Nothing') {
+									return $elm$core$Maybe$Just(
+										$author$project$Main$moveTo(pos));
+								} else {
+									if (_v3.a) {
+										return $elm$core$Maybe$Nothing;
+									} else {
+										return $elm$core$Maybe$Just(
+											$author$project$Main$capture(pos));
+									}
+								}
+							}(
+								A2($author$project$Board$get, pos, board));
+						},
+						$author$project$Board$knightMoves(position)));
 			case 'Bishop':
 				return A3($Chadtech$elm_vector$Vector4$foldr, $elm$core$Basics$append, _List_Nil, diagonals);
 			case 'Queen':
@@ -6410,6 +6455,17 @@ var $author$project$Board$asIndexedList = function (board) {
 				}),
 			board.tiles));
 };
+var $elm$core$List$filter = F2(
+	function (isGood, list) {
+		return A3(
+			$elm$core$List$foldr,
+			F2(
+				function (x, xs) {
+					return isGood(x) ? A2($elm$core$List$cons, x, xs) : xs;
+				}),
+			_List_Nil,
+			list);
+	});
 var $author$project$Main$find = F2(
 	function (fun, list) {
 		find:
@@ -6432,7 +6488,7 @@ var $author$project$Main$find = F2(
 		}
 	});
 var $author$project$Main$isInCheck = F2(
-	function (color, board_) {
+	function (color, board) {
 		var testMoves = F2(
 			function (p, fromPos) {
 				return A2(
@@ -6452,14 +6508,19 @@ var $author$project$Main$isInCheck = F2(
 					},
 					A2(
 						$elm$core$List$map,
-						function (it) {
-							return A2($author$project$Board$get, it, board_);
+						function (move) {
+							return A2($author$project$Board$get, move.position, board);
 						},
-						A3(
-							$author$project$Main$getLegalMoves_,
-							fromPos,
-							A2($author$project$Piece$Piece, color, p),
-							board_)));
+						A2(
+							$elm$core$List$filter,
+							function (move) {
+								return _Utils_eq(move.moveType, $author$project$Main$Capture);
+							},
+							A3(
+								$author$project$Main$getLegalMoves_,
+								fromPos,
+								A2($author$project$Piece$Piece, color, p),
+								board))));
 			});
 		var king = A2(
 			$author$project$Main$find,
@@ -6467,7 +6528,7 @@ var $author$project$Main$isInCheck = F2(
 				var piece = _v1.b;
 				return _Utils_eq(piece.pieceType, $author$project$Piece$King) && _Utils_eq(piece.color, color);
 			},
-			$author$project$Board$asIndexedList(board_));
+			$author$project$Board$asIndexedList(board));
 		return A2(
 			$elm$core$Maybe$withDefault,
 			false,
@@ -6571,10 +6632,15 @@ var $author$project$Main$update = F2(
 		switch (msg.$) {
 			case 'NoOp':
 				return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
-			case 'Move':
+			case 'MakeMove':
 				var position = msg.a;
 				var piece = msg.b;
-				var legalMovePositions = A3($author$project$Main$getLegalMoves_, position, piece, model.board);
+				var legalMovePositions = A2(
+					$elm$core$List$map,
+					function (move) {
+						return move.position;
+					},
+					A3($author$project$Main$getLegalMoves_, position, piece, model.board));
 				var newTiles = A2(
 					$elm$core$List$map,
 					function (tile) {
@@ -6616,7 +6682,12 @@ var $author$project$Main$update = F2(
 							return (_Utils_eq(movingPiece.color, model.playerToMove) && A2(
 								$elm$core$List$member,
 								tile,
-								A3($author$project$Main$getLegalMoves_, position, movingPiece, model.board))) ? _Utils_update(
+								A2(
+									$elm$core$List$map,
+									function (move) {
+										return move.position;
+									},
+									A3($author$project$Main$getLegalMoves_, position, movingPiece, model.board)))) ? _Utils_update(
 								model,
 								{
 									board: newBoard,
@@ -6703,9 +6774,9 @@ var $author$project$Main$DropOn = function (a) {
 var $author$project$Main$Highlight = function (a) {
 	return {$: 'Highlight', a: a};
 };
-var $author$project$Main$Move = F2(
+var $author$project$Main$MakeMove = F2(
 	function (a, b) {
-		return {$: 'Move', a: a, b: b};
+		return {$: 'MakeMove', a: a, b: b};
 	});
 var $author$project$Piece$asCSSClass = function (piece) {
 	var pieceLetter = function () {
@@ -6826,7 +6897,7 @@ var $author$project$Main$positionCSS = function (position) {
 };
 var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
 var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
-var $author$project$Main$board = function (model) {
+var $author$project$Main$boardView = function (model) {
 	var tiles = A2(
 		$elm$core$List$map,
 		function (tile) {
@@ -6861,7 +6932,7 @@ var $author$project$Main$board = function (model) {
 						$elm$html$Html$Events$onMouseUp(
 						$author$project$Main$DropOn(position)),
 						$author$project$Main$onDragStart(
-						A2($author$project$Main$Move, position, piece))
+						A2($author$project$Main$MakeMove, position, piece))
 					]),
 				_List_Nil);
 		});
@@ -6889,7 +6960,6 @@ var $author$project$Main$board = function (model) {
 		} else {
 			var _v1 = _v0.a;
 			var movingPiecePosition = _v1.a;
-			var movingPiece = _v1.b;
 			return (!_Utils_eq(movingPiecePosition, position)) ? A2(normal, piece, position) : A2(moving, piece, position);
 		}
 	};
@@ -6963,7 +7033,7 @@ var $author$project$Main$view = function (model) {
 		_List_Nil,
 		_List_fromArray(
 			[
-				$author$project$Main$board(model),
+				$author$project$Main$boardView(model),
 				$author$project$Main$indicators(model)
 			]));
 };

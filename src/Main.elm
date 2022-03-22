@@ -317,11 +317,12 @@ getLegalMoves_ position piece board =
       Board.knightMoves position
         |> List.map (\pos -> 
                       Board.get pos board
-                        |> Maybe.andThen (\otherPiece -> 
-                                            if piece.color == otherPiece.color
-                                            then Nothing
-                                            else Just <| capture pos
-                                         )
+                        |> (\mPiece ->
+                              case mPiece |> Maybe.map (\it -> it.color == piece.color) of
+                                Nothing -> Just <| moveTo pos
+                                Just True -> Nothing
+                                Just False -> Just <| capture pos
+                           )
                      )
         |> MaybeExtra.catMaybes
     Bishop  ->
