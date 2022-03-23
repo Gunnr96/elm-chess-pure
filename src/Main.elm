@@ -219,7 +219,7 @@ indicators model =
   
 view : Model -> Html Msg
 view model = 
-  div [] 
+  div [ class "container" ] 
   [ boardView model
   , indicators model
   ]

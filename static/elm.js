@@ -7030,7 +7030,10 @@ var $author$project$Main$indicators = function (model) {
 var $author$project$Main$view = function (model) {
 	return A2(
 		$elm$html$Html$div,
-		_List_Nil,
+		_List_fromArray(
+			[
+				$elm$html$Html$Attributes$class('container')
+			]),
 		_List_fromArray(
 			[
 				$author$project$Main$boardView(model),
