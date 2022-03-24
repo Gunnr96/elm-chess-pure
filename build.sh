@@ -1,1 +1,1 @@
-nix-shell --run 'elm make --output=static/elm.js src/Main.elm'
+nix-shell --run 'elm make --optimize --output=static/elm.js src/Main.elm'
